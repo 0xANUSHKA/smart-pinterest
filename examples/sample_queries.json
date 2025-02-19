@@ -1,0 +1,46 @@
+{
+  "example_searches": [
+    {
+      "name": "Emotional Search",
+      "curl_command": "curl -X 'POST' 'http://localhost:8000/search' -H 'Content-Type: application/json' -d '{\"text_query\": \"a serene landscape with calm waters\", \"top_k\": 5}'",
+      "swagger_body": {
+        "text_query": "a serene landscape with calm waters",
+        "top_k": 5
+      },
+      "explanation": "This search demonstrates how the system understands mood and atmosphere"
+    },
+    {
+      "name": "Artistic Style Search",
+      "curl_command": "curl -X 'POST' 'http://localhost:8000/search' -H 'Content-Type: application/json' -d '{\"text_query\": \"image in the style of Van Gogh\", \"top_k\": 5}'",
+      "swagger_body": {
+        "text_query": "image in the style of Van Gogh",
+        "top_k": 5
+      },
+      "explanation": "Shows how the system can recognize artistic styles without explicit tagging"
+    },
+    {
+      "name": "Complex Scene Search",
+      "curl_command": "curl -X 'POST' 'http://localhost:8000/search' -H 'Content-Type: application/json' -d '{\"text_query\": \"person wearing blue looking thoughtfully at sunset\", \"top_k\": 5}'",
+      "swagger_body": {
+        "text_query": "person wearing blue looking thoughtfully at sunset",
+        "top_k": 5
+      },
+      "explanation": "Demonstrates understanding of multiple elements in a scene"
+    }
+  ],
+  "how_to_use": {
+    "using_swagger": [
+      "1. Go to http://localhost:8000/docs",
+      "2. Click on the /search endpoint",
+      "3. Click 'Try it out'",
+      "4. Copy any swagger_body from above examples",
+      "5. Paste into the Request body",
+      "6. Click 'Execute'"
+    ],
+    "using_curl": [
+      "1. Open your terminal",
+      "2. Copy any curl_command from above examples",
+      "3. Paste and run"
+    ]
+  }
+} 
