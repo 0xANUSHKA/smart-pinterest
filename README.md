@@ -1,4 +1,4 @@
-# Smart Pinterest 🎨 
+# Smart Pinterest
 
 An AI-powered visual search engine that uses CLIP and neural embeddings to understand images like humans do. Search for images using natural language, emotions, and abstract concepts.
 
