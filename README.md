@@ -14,7 +14,7 @@ That's when it hit me - what if we could search for images the way we naturally 
 
 This project isn't about replacing Pinterest, it's about exploring a different way of discovering visual content. One that's less about shopping and trends, and more about pure visual understanding and emotional connection.
 
-## How We're Different from Pinterest
+## How it differs from Pinterest
 
 ### Pinterest's Current AI Approach:
 - Uses specialized computer vision models trained on user engagement data
@@ -23,7 +23,7 @@ This project isn't about replacing Pinterest, it's about exploring a different w
 - Relies on a mix of user behavior data and image content
 - Optimized for engagement and commercial intent
 
-### Our Smart Pinterest's Approach:
+### My "Smart Pinterest" Approach:
 - **Single Unified Model**: Uses CLIP's multimodal understanding instead of multiple specialized systems
 - **Zero-Shot Learning**: Can understand new concepts without specific training
 - **Pure Content Understanding**: Focuses on semantic meaning rather than user behavior patterns
@@ -35,7 +35,7 @@ For example, when searching on Pinterest:
 - Recommendations mix visual similarity with user behavior patterns
 - Search understanding is optimized for shopping and DIY projects
 
-With our system:
+With this system:
 - Results are based purely on semantic understanding
 - Finds matches based on actual visual and conceptual content
 - Can understand abstract ideas without prior examples
