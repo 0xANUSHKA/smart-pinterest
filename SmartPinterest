@@ -12,6 +12,10 @@ import uvicorn
 from pinecone import Pinecone, ServerlessSpec
 from dotenv import load_dotenv
 import traceback
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
+import shutil
 
 # Load environment variables
 load_dotenv()
@@ -51,6 +55,13 @@ index = pc.Index(index_name)
 
 app = FastAPI()
 
+# Add these near the top where you create the FastAPI app
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+# Create uploads directory if it doesn't exist
+os.makedirs("static/uploads", exist_ok=True)
+
 class SearchQuery(BaseModel):
     text_query: str = None
     image_id: str = None
@@ -77,35 +88,29 @@ def get_text_embedding(text: str) -> torch.Tensor:
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...), tags: List[str] = None):
     try:
-        print(f"Receiving file: {file.filename}")
-        temp_path = f"temp_{file.filename}"
-        
-        with open(temp_path, "wb") as f:
-            content = await file.read()
-            f.write(content)
+        # Save file to uploads directory
+        file_path = f"static/uploads/{file.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
         
         # Get embedding
-        embedding = get_image_embedding(temp_path)
+        embedding = get_image_embedding(file_path)
         
-        # Prepare vector for Pinecone
+        # Store in Pinecone with full URL path
+        image_url = f"/static/uploads/{file.filename}"
         vector_data = {
             'id': file.filename,
             'values': embedding.tolist(),
             'metadata': {
                 "filename": file.filename,
+                "image_url": image_url,  # Store the full URL path
                 "tags": tags or []
             }
         }
         
-        # Upload to Pinecone
-        print("Uploading to Pinecone with vector:", vector_data)
         index.upsert(vectors=[vector_data])
-        
-        os.remove(temp_path)
-        return {"message": "Image uploaded and indexed successfully"}
+        return {"message": "Image uploaded and indexed successfully", "image_url": image_url}
     except Exception as e:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
         print(f"Error in upload_image: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -152,6 +157,11 @@ async def search(query: SearchQuery):
             for match in results.matches
         ]
     }
+
+# Add this new endpoint
+@app.get("/")
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

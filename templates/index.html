@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Pinterest</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Smart Pinterest 🎨</h1>
+            <p>AI-Powered Visual Search</p>
+        </header>
+
+        <div class="main-content">
+            <section class="upload-section">
+                <h2>Upload Image</h2>
+                <form id="uploadForm">
+                    <div class="upload-area" id="dropZone">
+                        <div class="upload-placeholder" id="uploadPlaceholder">
+                            <div class="upload-icon">📁</div>
+                            <p>Drag & drop an image or click to browse</p>
+                        </div>
+                        <img id="imagePreview" class="image-preview hidden" src="" alt="Preview">
+                        <input type="file" id="imageInput" accept="image/*" hidden>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="tags" placeholder="Add tags (comma separated)">
+                        <button type="submit" class="primary-button">Upload</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="search-section">
+                <h2>Search Images</h2>
+                <form id="searchForm">
+                    <div class="search-bar">
+                        <input type="text" id="searchQuery" placeholder="Try 'peaceful sunset' or 'happy person in nature'">
+                        <button type="submit" class="primary-button">Search</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="results-section">
+                <div id="results" class="image-grid"></div>
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Processing...</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Drag and drop functionality
+        const dropZone = document.getElementById('dropZone');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const loading = document.getElementById('loading');
+
+        dropZone.addEventListener('click', () => imageInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageSelection(file);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleImageSelection(e.target.files[0]);
+            }
+        });
+
+        function handleImageSelection(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.classList.remove('hidden');
+                uploadPlaceholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.getElementById('uploadForm').onsubmit = async (e) => {
+            e.preventDefault();
+            loading.classList.remove('hidden');
+            const formData = new FormData();
+            const fileInput = document.getElementById('imageInput');
+            const tags = document.getElementById('tags').value.split(',').map(tag => tag.trim());
+            
+            formData.append('file', fileInput.files[0]);
+            formData.append('tags', JSON.stringify(tags));
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                showNotification(result.message);
+            } catch (error) {
+                showNotification('Error uploading image', 'error');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        };
+
+        document.getElementById('searchForm').onsubmit = async (e) => {
+            e.preventDefault();
+            loading.classList.remove('hidden');
+            const query = document.getElementById('searchQuery').value;
+            
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text_query: query,
+                        top_k: 9
+                    })
+                });
+                const results = await response.json();
+                displayResults(results.matches);
+            } catch (error) {
+                showNotification('Error searching images', 'error');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        };
+
+        function displayResults(matches) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            
+            matches.forEach(match => {
+                const resultCard = document.createElement('div');
+                resultCard.className = 'result-card';
+                resultCard.innerHTML = `
+                    <div class="result-image">
+                        <img src="${match.metadata.image_url}" 
+                             alt="${match.metadata.filename}"
+                             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%23eee%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>No Image</text></svg>'">
+                    </div>
+                    <div class="result-info">
+                        <div class="similarity-badge">${(match.score * 100).toFixed(0)}% match</div>
+                        <p class="filename">${match.metadata.filename}</p>
+                        <p class="tags">${match.metadata.tags.join(' • ')}</p>
+                    </div>
+                `;
+                resultsDiv.appendChild(resultCard);
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+    </script>
+</body>
+</html> 
