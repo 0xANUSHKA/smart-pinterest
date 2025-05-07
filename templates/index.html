@@ -1,149 +1,345 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Smart Pinterest</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Visual Search | AI-Powered Image Discovery</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        :root {
+            --bg-primary: #111827;
+            --bg-secondary: #1F2937;
+            --text-primary: #F9FAFB;
+            --text-secondary: #D1D5DB;
+            --accent: #6366F1;
+            --accent-hover: #4F46E5;
+            --error: #EF4444;
+            --success: #10B981;
+            --accent-gradient: linear-gradient(135deg, #6366F1, #8B5CF6, #EC4899);
+            --accent-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+            --card-gradient: linear-gradient(180deg, rgba(31, 41, 55, 0) 0%, rgba(31, 41, 55, 0.9) 100%);
+            --hover-gradient: linear-gradient(45deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientFlow 8s linear infinite;
+            position: relative;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            background: var(--accent-gradient);
+            filter: blur(25px) opacity(0.15);
+            z-index: -1;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .search-section {
+            margin-bottom: 4rem;
+        }
+
+        .search-bar {
+            background: var(--bg-secondary);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .search-bar:focus-within {
+            transform: translateY(-2px);
+            box-shadow: var(--accent-glow);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(5px);
+            border: 1px solid #374151;
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .search-examples {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .search-examples span {
+            display: inline-block;
+            margin: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .search-examples span:hover {
+            background: var(--hover-gradient);
+            transform: translateY(-2px);
+            box-shadow: var(--accent-glow);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .result-card {
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--card-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--accent-glow);
+        }
+
+        .result-card:hover::before {
+            opacity: 1;
+        }
+
+        .result-image {
+            width: 100%;
+            aspect-ratio: 3/2;
+            object-fit: cover;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .result-card:hover .result-image {
+            transform: scale(1.1);
+        }
+
+        .result-info {
+            padding: 1rem;
+        }
+
+        .similarity-score {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent);
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-author {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .upload-section {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #374151;
+        }
+
+        .upload-area {
+            border: 2px dashed #374151;
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(31, 41, 55, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: var(--hover-gradient);
+            transform: translateY(-4px);
+            box-shadow: var(--accent-glow);
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .upload-area:hover .upload-icon {
+            transform: scale(1.2) rotate(-10deg);
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(99, 102, 241, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s linear infinite, glow 2s ease-in-out infinite;
+            background: var(--accent-gradient);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: var(--accent-glow); }
+            50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.5); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            background: rgba(31, 41, 55, 0.9);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            transform-origin: right;
+            animation: notifySlide 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes notifySlide {
+            0% { transform: translateX(100%) scale(0.5); opacity: 0; }
+            100% { transform: translateX(0) scale(1); opacity: 1; }
+        }
+
+        .notification.success { border-left: 4px solid var(--success); }
+        .notification.error { border-left: 4px solid var(--error); }
+    </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Smart Pinterest 🎨</h1>
-            <p>AI-Powered Visual Search</p>
+            <h1>Visual Search</h1>
+            <p class="subtitle">Discover images through AI understanding</p>
         </header>
 
-        <div class="main-content">
-            <section class="upload-section">
-                <h2>Upload Image</h2>
-                <form id="uploadForm">
-                    <div class="upload-area" id="dropZone">
-                        <div class="upload-placeholder" id="uploadPlaceholder">
-                            <div class="upload-icon">📁</div>
-                            <p>Drag & drop an image or click to browse</p>
-                        </div>
-                        <img id="imagePreview" class="image-preview hidden" src="" alt="Preview">
-                        <input type="file" id="imageInput" accept="image/*" hidden>
+        <section class="search-section">
+            <form id="searchForm">
+                <div class="search-bar">
+                    <input 
+                        type="text" 
+                        id="searchQuery" 
+                        class="search-input"
+                        placeholder="Describe what you're looking for..."
+                        autocomplete="off"
+                    >
+                    <div class="search-examples">
+                        Try: 
+                        <span onclick="setSearch('a peaceful sunset over mountains')">peaceful sunset</span>
+                        <span onclick="setSearch('urban street photography at night')">urban night</span>
+                        <span onclick="setSearch('minimalist architecture in black and white')">minimalist architecture</span>
                     </div>
-                    <div class="input-group">
-                        <input type="text" id="tags" placeholder="Add tags (comma separated)">
-                        <button type="submit" class="primary-button">Upload</button>
-                    </div>
-                </form>
-            </section>
-
-            <section class="search-section">
-                <h2>Search Images</h2>
-                <form id="searchForm">
-                    <div class="search-bar">
-                        <input type="text" id="searchQuery" placeholder="Try 'peaceful sunset' or 'happy person in nature'">
-                        <button type="submit" class="primary-button">Search</button>
-                    </div>
-                </form>
-            </section>
-
-            <section class="results-section">
-                <div id="results" class="image-grid"></div>
-                <div id="loading" class="loading hidden">
-                    <div class="spinner"></div>
-                    <p>Processing...</p>
                 </div>
-            </section>
-        </div>
+            </form>
+            <div id="results" class="results-grid"></div>
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Searching through images...</p>
+            </div>
+        </section>
+
+        <section class="upload-section">
+            <h2>Contribute to the Collection</h2>
+            <p class="subtitle" style="margin-bottom: 1rem;">Add your own images to make them searchable</p>
+            <form id="uploadForm">
+                <div class="upload-area" id="dropZone">
+                    <div class="upload-icon">📁</div>
+                    <p>Drag & drop an image or click to browse</p>
+                    <input type="file" id="imageInput" accept="image/*" hidden>
+                </div>
+            </form>
+        </section>
     </div>
 
     <script>
-        // Drag and drop functionality
-        const dropZone = document.getElementById('dropZone');
-        const imageInput = document.getElementById('imageInput');
-        const imagePreview = document.getElementById('imagePreview');
-        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-        const loading = document.getElementById('loading');
-
-        dropZone.addEventListener('click', () => imageInput.click());
-
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                handleImageSelection(file);
-            }
-        });
-
-        imageInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                handleImageSelection(e.target.files[0]);
-            }
-        });
-
-        function handleImageSelection(file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                imagePreview.src = e.target.result;
-                imagePreview.classList.remove('hidden');
-                uploadPlaceholder.classList.add('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        document.getElementById('uploadForm').onsubmit = async (e) => {
-            e.preventDefault();
-            loading.classList.remove('hidden');
-            const formData = new FormData();
-            const fileInput = document.getElementById('imageInput');
-            const tags = document.getElementById('tags').value.split(',').map(tag => tag.trim());
-            
-            formData.append('file', fileInput.files[0]);
-            formData.append('tags', JSON.stringify(tags));
-
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await response.json();
-                showNotification(result.message);
-            } catch (error) {
-                showNotification('Error uploading image', 'error');
-            } finally {
-                loading.classList.add('hidden');
-            }
-        };
-
-        document.getElementById('searchForm').onsubmit = async (e) => {
-            e.preventDefault();
-            loading.classList.remove('hidden');
-            const query = document.getElementById('searchQuery').value;
-            
-            try {
-                const response = await fetch('/search', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        text_query: query,
-                        top_k: 9
-                    })
-                });
-                const results = await response.json();
-                displayResults(results.matches);
-            } catch (error) {
-                showNotification('Error searching images', 'error');
-            } finally {
-                loading.classList.add('hidden');
-            }
-        };
-
+        // Previous JavaScript remains the same, just update the results display function:
         function displayResults(matches) {
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '';
@@ -152,28 +348,110 @@
                 const resultCard = document.createElement('div');
                 resultCard.className = 'result-card';
                 resultCard.innerHTML = `
-                    <div class="result-image">
-                        <img src="${match.metadata.image_url}" 
-                             alt="${match.metadata.filename}"
-                             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%23eee%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>No Image</text></svg>'">
-                    </div>
+                    <img 
+                        class="result-image"
+                        src="${match.metadata.image_url}" 
+                        alt="${match.metadata.filename}"
+                        onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%23374151%22/><text x=%2250%%22 y=%2250%%22 fill=%22%23D1D5DB%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>No Image</text></svg>'"
+                    >
                     <div class="result-info">
-                        <div class="similarity-badge">${(match.score * 100).toFixed(0)}% match</div>
-                        <p class="filename">${match.metadata.filename}</p>
-                        <p class="tags">${match.metadata.tags.join(' • ')}</p>
+                        <div class="similarity-score">${(match.score * 100).toFixed(0)}% match</div>
+                        <p class="result-author">by ${match.metadata.author}</p>
                     </div>
                 `;
                 resultsDiv.appendChild(resultCard);
             });
         }
 
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
+        function setSearch(query) {
+            document.getElementById('searchQuery').value = query;
+            document.getElementById('searchForm').dispatchEvent(new Event('submit'));
         }
+
+        document.getElementById('searchForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const loading = document.getElementById('loading');
+    loading.classList.remove('hidden');
+    
+    const query = document.getElementById('searchQuery').value;
+    
+    try {
+        const response = await fetch('/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text_query: query,
+                top_k: 9
+            })
+        });
+        const results = await response.json();
+        displayResults(results.matches);
+    } catch (error) {
+        showNotification('Error searching images', 'error');
+    } finally {
+        loading.classList.add('hidden');
+    }
+};
+
+// Upload handling
+const dropZone = document.getElementById('dropZone');
+const imageInput = document.getElementById('imageInput');
+
+dropZone.addEventListener('click', () => imageInput.click());
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = 'var(--accent)';
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.style.borderColor = '#374151';
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = '#374151';
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        handleUpload(file);
+    }
+});
+
+imageInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) {
+        handleUpload(e.target.files[0]);
+    }
+});
+
+async function handleUpload(file) {
+    const loading = document.getElementById('loading');
+    loading.classList.remove('hidden');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+        showNotification('Image uploaded successfully!', 'success');
+    } catch (error) {
+        showNotification('Error uploading image', 'error');
+    } finally {
+        loading.classList.add('hidden');
+    }
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
     </script>
 </body>
 </html> 
